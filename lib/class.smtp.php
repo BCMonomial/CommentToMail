@@ -206,8 +206,11 @@ class SMTP
 
         $errno = 0;
         $errstr = '';
+        
+        // 尝试使用stream_socket_client进行连接，如果失败则回退到fsockopen
         $socket_context = stream_context_create($options);
-        //Suppress errors; connection failures are handled at a higher level
+        
+        // 首先尝试使用stream_socket_client
         $this->smtp_conn = @stream_socket_client(
             $host . ":" . $port,
             $errno,
@@ -216,6 +219,11 @@ class SMTP
             STREAM_CLIENT_CONNECT,
             $socket_context
         );
+        
+        // 如果stream_socket_client失败，尝试使用fsockopen（阿里云虚拟主机兼容）
+        if (empty($this->smtp_conn)) {
+            $this->smtp_conn = @fsockopen($host, $port, $errno, $errstr, $timeout);
+        }
 
         // Verify we connected properly
         if (empty($this->smtp_conn)) {
@@ -534,7 +542,7 @@ class SMTP
         $max_line_length = 998;
 
         foreach ($lines as $line) {
-            $lines_out = null;
+            $lines_out = array(); // 初始化为空数组而不是null
             if ($line == '' && $in_headers) {
                 $in_headers = false;
             }
@@ -562,7 +570,7 @@ class SMTP
             $lines_out[] = $line;
 
             // send the lines to the server
-            while (list(, $line_out) = @each($lines_out)) {
+            foreach ($lines_out as $line_out) {
                 if (strlen($line_out) > 0) {
                     if (substr($line_out, 0, 1) == '.') {
                         $line_out = '.' . $line_out;

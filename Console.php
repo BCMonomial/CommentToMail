@@ -29,7 +29,18 @@ class CommentToMail_Console extends Typecho_Widget
         /** 管理员权限 */
         $this->widget('Widget_User')->pass('administrator');
         $this->_dir = dirname(__FILE__);
-        $files = glob($this->_dir . '/*.{html,HTML}', GLOB_BRACE);
+        
+        // 兼容性修复：GLOB_BRACE在某些系统中未定义
+        if (!defined('GLOB_BRACE')) {
+            // 如果GLOB_BRACE未定义，分别获取html和HTML文件
+            $files = array_merge(
+                glob($this->_dir . '/*.html'),
+                glob($this->_dir . '/*.HTML')
+            );
+        } else {
+            $files = glob($this->_dir . '/*.{html,HTML}', GLOB_BRACE);
+        }
+        
         $this->_currentFile = $this->request->get('file', 'owner.html');
 
         if (preg_match("/^([_0-9a-z-\.\ ])+$/i", $this->_currentFile)
