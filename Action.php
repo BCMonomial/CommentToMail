@@ -87,8 +87,12 @@ class CommentToMail_Action extends Typecho_Widget implements Widget_Interface_Do
                 $this->mailLog('序列化错误: ' . (error_get_last()['message'] ?? '未知错误'));
                 return false;
             }
-            
+
             $this->mailLog('数据反序列化成功');
+
+            // 为反序列化后的邮件添加标题
+            $this->_email->titleForOwner = $this->_cfg->titleForOwner;
+            $this->_email->titleForGuest = $this->_cfg->titleForGuest;
             
             // 验证必要的配置信息
             if (!$this->_cfg || !isset($this->_cfg->user) || empty($this->_cfg->user)) {
